@@ -11,14 +11,25 @@
 #define SOFTUART_DEBUG_PIN 5
 #define SOFTUART_DEBUG2_PIN 4
 
+typedef struct trigger_config {
+	uint8_t start_trigger;
+    uint8_t stop_trigger;
+    uint8_t start_trigger_enabled;
+    uint8_t stop_trigger_enabled;
+} trigger_config_t;
+
 
 void softuart_init();
-void softuart_probe();
 void softuart_reset();
 void softuart_clear();
 void softuart_start();
 void softuart_enable();
 void softuart_disable();
+void softuart_set_trigger_config(trigger_config_t *triggerconf);
+uint8_t softuart_data_available();
+uint8_t softuart_done_receiving();
+uint8_t softuart_buffer_count();
+uint8_t softuart_read_byte();
 void softuart_process(uint32_t msticks);
 void softuart_sample();
 

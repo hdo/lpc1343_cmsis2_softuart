@@ -105,7 +105,13 @@ int main (void) {
    logger_setEnabled(1);
    logger_logStringln("/O:entering main loop..."); // send online message (means i'm online)
 
+   trigger_config_t trigger_config;
+   trigger_config.start_trigger = 0x02;
+   trigger_config.stop_trigger = 0x03;
+   trigger_config.start_trigger_enabled = 1;
+   trigger_config.stop_trigger_enabled = 1;
 
+   softuart_set_trigger_config(&trigger_config);
    softuart_enable();
 
    while (1) {
@@ -120,6 +126,12 @@ int main (void) {
        }
 
 
+       if (softuart_data_available() && softuart_done_receiving()) {
+    	   while(softuart_data_available()) {
+    		   logger_logNumberln(softuart_read_byte());
+    	   }
+    	   softuart_reset();
+       }
 
    }
 }

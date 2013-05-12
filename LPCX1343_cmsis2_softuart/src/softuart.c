@@ -6,14 +6,15 @@
 #include "queue.h"
 #include "logger.h"
 
-
 uint8_t softuart_buffer_data[SOFTUART_BUFFER_SIZE];
 ringbuffer_t softuart_rbuffer = {.buffer=softuart_buffer_data, .head=0, .tail=0, .count=0, .size=SOFTUART_BUFFER_SIZE};
 
 uint8_t softuart_current_bit = 0; // 0 is start bit
 uint8_t softuart_current_byte = 0;
-uint8_t softuart_data_available = 0;
 uint8_t softuart_error_reading = 0;
+trigger_config_t *trigger_config = 0;
+uint8_t softuart_is_start_triggered = 0;
+uint8_t softuart_is_stop_triggered = 0;
 
 void softuart_init() {
 	GPIOSetDir( SOFTUART_PORT, SOFTUART_RX_PIN, 0 );
@@ -26,12 +27,9 @@ void softuart_init() {
     NVIC_EnableIRQ(TIMER_16_0_IRQn);
 }
 
-
-
 void softuart_clear() {
 	softuart_current_bit = 0;
 	softuart_current_byte = 0;
-	softuart_data_available = 0;
 	softuart_error_reading = 0;
 }
 
@@ -57,6 +55,9 @@ void softuart_start() {
 void softuart_reset() {
 	queue_reset(&softuart_rbuffer);
 	softuart_clear();
+	softuart_is_start_triggered = 0;
+	softuart_is_stop_triggered = 0;
+	softuart_enable();
 }
 
 void softuart_enable() {
@@ -72,9 +73,62 @@ void softuart_disable() {
 	GPIOIntDisable( SOFTUART_PORT, SOFTUART_RX_PIN );
 }
 
+
+void softuart_set_trigger_config(trigger_config_t *triggerconf) {
+	trigger_config = triggerconf;
+}
+
+uint8_t softuart_data_available() {
+	return queue_dataAvailable(&softuart_rbuffer);
+}
+
+uint8_t softuart_done_receiving() {
+	return softuart_is_stop_triggered;
+}
+
+uint8_t softuart_buffer_count() {
+	return queue_count(&softuart_rbuffer);
+}
+
+uint8_t softuart_read_byte() {
+	return queue_read(&softuart_rbuffer);
+}
+
 void softuart_process(uint32_t msticks) {
 
 }
+
+void softuart_check_add_data_to_queue(uint8_t data) {
+	if (trigger_config) {
+
+		// the order is important here!
+		if (trigger_config->start_trigger_enabled) {
+			if (!softuart_is_start_triggered && data == trigger_config->start_trigger) {
+				softuart_is_start_triggered = 1;
+			}
+		}
+		else {
+			softuart_is_start_triggered = 1;
+		}
+
+		if (softuart_is_start_triggered && !softuart_is_stop_triggered) {
+			queue_put(&softuart_rbuffer, data);
+		}
+
+		if (trigger_config->stop_trigger_enabled) {
+			if (!softuart_is_stop_triggered && data == trigger_config->stop_trigger) {
+				softuart_is_stop_triggered = 1;
+			}
+		}
+		else {
+			softuart_is_stop_triggered = 0;
+		}
+	}
+	else {
+		queue_put(&softuart_rbuffer, data);
+	}
+}
+
 
 void softuart_sample() {
 	if (GPIOGetValue(SOFTUART_PORT, SOFTUART_DEBUG_PIN)) {
@@ -100,9 +154,8 @@ void softuart_sample() {
 	// check stop bit
 	if (softuart_current_bit == 9) {
 		if (GPIOGetValue(SOFTUART_PORT, SOFTUART_RX_PIN)) {
-			queue_put(&softuart_rbuffer, softuart_current_byte);
-			logger_logNumberln(softuart_current_byte);
-			softuart_data_available = 1;
+			softuart_check_add_data_to_queue(softuart_current_byte);
+			//logger_logNumberln(softuart_current_byte);
 		}
 		else {
 			softuart_error_reading = 1;
