@@ -33,7 +33,7 @@ void softuart_clear() {
 	softuart_error_reading = 0;
 }
 
-void softuart_start() {
+void softuart_start_sampling() {
 	if (GPIOGetValue(SOFTUART_PORT, SOFTUART_DEBUG2_PIN)) {
 		GPIOSetValue(SOFTUART_PORT, SOFTUART_DEBUG2_PIN, 0);
 	}
@@ -86,7 +86,7 @@ uint8_t softuart_done_receiving() {
 	return softuart_is_stop_triggered;
 }
 
-uint8_t softuart_buffer_count() {
+uint8_t softuart_data_count() {
 	return queue_count(&softuart_rbuffer);
 }
 

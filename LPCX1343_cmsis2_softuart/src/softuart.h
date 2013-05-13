@@ -21,14 +21,13 @@ typedef struct trigger_config {
 
 void softuart_init();
 void softuart_reset();
-void softuart_clear();
-void softuart_start();
+void softuart_start_sampling();
 void softuart_enable();
 void softuart_disable();
 void softuart_set_trigger_config(trigger_config_t *triggerconf);
 uint8_t softuart_data_available();
 uint8_t softuart_done_receiving();
-uint8_t softuart_buffer_count();
+uint8_t softuart_data_count();
 uint8_t softuart_read_byte();
 void softuart_process(uint32_t msticks);
 void softuart_sample();
