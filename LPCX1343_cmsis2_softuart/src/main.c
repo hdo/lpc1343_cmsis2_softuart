@@ -5,7 +5,7 @@
 #include "timer16.h"
 #include "timer32.h"
 #include "ext_int.h"
-#include "softuart.h"
+#include "rdm630.h"
 
 #include <cr_section_macros.h>
 #include <NXP/crp.h>
@@ -28,11 +28,7 @@ extern volatile uint8_t UARTTxEmpty;
 extern volatile uint8_t UARTBuffer[BUFSIZE];
 extern volatile uint32_t UARTCount;
 
-
-
-
 volatile uint32_t msTicks;                          /* counts 10ms timeTicks */
-
 
 
 /*----------------------------------------------------------------------------
@@ -86,7 +82,6 @@ int main (void) {
 
    init_timers();
 
-   softuart_init();
 
 
    // The LED on Xpresso
@@ -105,14 +100,10 @@ int main (void) {
    logger_setEnabled(1);
    logger_logStringln("/O:entering main loop..."); // send online message (means i'm online)
 
-   trigger_config_t trigger_config;
-   trigger_config.start_trigger = 0x02;
-   trigger_config.stop_trigger = 0x03;
-   trigger_config.start_trigger_enabled = 1;
-   trigger_config.stop_trigger_enabled = 1;
 
-   softuart_set_trigger_config(&trigger_config);
-   softuart_enable();
+   rdm630_init();
+   rdm630_reset();
+
 
    while (1) {
 
@@ -125,12 +116,12 @@ int main (void) {
          }
        }
 
+       rdm630_process(msTicks);
 
-       if (softuart_data_available() && softuart_done_receiving()) {
-    	   while(softuart_data_available()) {
-    		   logger_logNumberln(softuart_read_byte());
-    	   }
-    	   softuart_reset();
+       if (rdm630_data_available()) {
+    	   uint32_t rfid_id = rdm630_read_rfid_id();
+    	   rdm630_reset();
+    	   logger_logNumberln(rfid_id);
        }
 
    }
