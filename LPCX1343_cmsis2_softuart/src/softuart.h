@@ -8,9 +8,6 @@
 #define SOFTUART_RX_PIN  6
 //#define SOFTUART_TX_PIN 9
 
-#define SOFTUART_DEBUG_PIN 5
-#define SOFTUART_DEBUG2_PIN 4
-
 typedef struct trigger_config {
 	uint8_t start_trigger;
     uint8_t stop_trigger;

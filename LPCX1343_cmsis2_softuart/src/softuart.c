@@ -21,9 +21,6 @@ void softuart_init() {
 	/* port0_1, single edge trigger on falling edge*/
 	GPIOSetInterrupt( SOFTUART_PORT, SOFTUART_RX_PIN, 0, 0, 0 );
 
-	GPIOSetDir( SOFTUART_PORT, SOFTUART_DEBUG_PIN, 1 );
-	GPIOSetDir( SOFTUART_PORT, SOFTUART_DEBUG2_PIN, 1 );
-
     NVIC_EnableIRQ(TIMER_16_0_IRQn);
 }
 
@@ -34,12 +31,6 @@ void softuart_clear() {
 }
 
 void softuart_start_sampling() {
-	if (GPIOGetValue(SOFTUART_PORT, SOFTUART_DEBUG2_PIN)) {
-		GPIOSetValue(SOFTUART_PORT, SOFTUART_DEBUG2_PIN, 0);
-	}
-	else {
-		GPIOSetValue(SOFTUART_PORT, SOFTUART_DEBUG2_PIN, 1);
-	}
 	// disable ext interrupt
 	softuart_disable();
 	softuart_clear();
@@ -131,12 +122,6 @@ void softuart_check_add_data_to_queue(uint8_t data) {
 
 
 void softuart_sample() {
-	if (GPIOGetValue(SOFTUART_PORT, SOFTUART_DEBUG_PIN)) {
-		GPIOSetValue(SOFTUART_PORT, SOFTUART_DEBUG_PIN, 0);
-	}
-	else {
-		GPIOSetValue(SOFTUART_PORT, SOFTUART_DEBUG_PIN, 1);
-	}
 
 	// ignore start bit
 	if (softuart_current_bit == 0) {
